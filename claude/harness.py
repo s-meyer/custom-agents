@@ -84,10 +84,9 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
         raise HarnessError(f"unsupported harness: {profile.harness}")
 
     tools, permission_mode = _tool_permissions(request.permissions.sandbox)
-    model = request.model or profile.model
+    model = request.model
     if foundry_enabled():
-        endpoint, deployment, _ = foundry_settings()
-        model = request.model or deployment
+        endpoint, _, _ = foundry_settings()
         os.environ.update(
             {
                 "ANTHROPIC_BASE_URL": f"{endpoint}/anthropic",
@@ -108,7 +107,7 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
     )
     logger.info(
         "claude.query.started model=%s workspace=%s sandbox=%s tools=%s",
-        model or "sdk-default",
+        model,
         cwd,
         request.permissions.sandbox,
         ",".join(tools),

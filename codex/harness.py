@@ -24,11 +24,10 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
     }[request.permissions.sandbox]
     provider_config = None
     model_provider = None
-    model = request.model or profile.model
+    model = request.model
     if foundry_enabled():
-        endpoint, deployment, _ = foundry_settings()
+        endpoint, _, _ = foundry_settings()
         token = foundry_access_token()
-        model = request.model or deployment
         provider_config = {
             "model_providers": {
                 "azure_foundry": {
@@ -44,7 +43,7 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
     async with AsyncCodex() as codex:
         logger.info(
             "codex.thread.starting model=%s workspace=%s sandbox=%s",
-            model or "sdk-default",
+            model,
             cwd,
             request.permissions.sandbox,
         )

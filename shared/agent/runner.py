@@ -198,7 +198,7 @@ async def run(request: AgentTaskRequest) -> AgentTaskResult:
             request.agent_profile.name,
             request.agent_profile.version,
             profile.harness,
-            profile.model or "sdk-default",
+            request.model,
         )
         logger.info("permissions.applied task_id=%s sandbox=%s", request.task_id, request.permissions.sandbox)
         run_agent = _load_harness(profile.harness)

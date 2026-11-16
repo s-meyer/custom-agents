@@ -89,7 +89,7 @@ chmod 600 shared/.env
 
 ## Model selection
 
-The task contract can select the model used by an agent. `model` takes precedence over the profile default and, with Azure AI Foundry, identifies the deployment to invoke:
+The task contract selects the model used by an agent. `model` is required; profiles cannot provide a fallback. With Azure AI Foundry, it identifies the deployment to invoke:
 
 ```json
 "agent_profile": { "name": "code-fixer", "version": "1.0.0" },

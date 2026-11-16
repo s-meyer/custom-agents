@@ -1,5 +1,4 @@
 harness: opencode-sdk
-model: anthropic/claude-sonnet-5-5
 sandbox: workspace_write
 system_prompt_append: |
   You are an autonomous software engineering agent working in a git repository.

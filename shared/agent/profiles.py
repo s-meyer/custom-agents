@@ -9,7 +9,6 @@ from agent.contract import CompletionPolicy
 class AgentProfile(BaseModel):
     model_config = ConfigDict(extra="forbid")
     harness: str
-    model: str | None = None
     sandbox: str = "workspace_write"
     system_prompt_append: str
     limits_mapping: dict[str, str]

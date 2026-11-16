@@ -39,12 +39,12 @@ class _HumanActivityFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         message = record.getMessage()
         event = message.split(maxsplit=1)[0]
-        detail = self._describe(event, message)
+        detail = self._describe(event, message, record.levelno)
         timestamp = datetime.now().astimezone().strftime("%H:%M:%S")
         return f"[{timestamp}] {detail}"
 
     @staticmethod
-    def _describe(event: str, message: str) -> str:
+    def _describe(event: str, message: str, levelno: int) -> str:
         if event == "task.started":
             return f"Starting task {_value(message, 'task_id')} (attempt {_value(message, 'attempt')})"
         if event == "profile.loaded":
@@ -125,9 +125,9 @@ class _HumanActivityFormatter(logging.Formatter):
             return f"Task failed ({_value(message, 'error_type')}); see the result artifact for details"
         if event == "task.finished":
             return f"Task finished: {_value(message, 'status')} ({_value(message, 'duration_s')}s)"
-        if record.levelno >= logging.ERROR:
+        if levelno >= logging.ERROR:
             return f"Error: {message}"
-        if record.levelno >= logging.WARNING:
+        if levelno >= logging.WARNING:
             return f"Warning: {message}"
         return message
 

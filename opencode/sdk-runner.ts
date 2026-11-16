@@ -3,7 +3,7 @@ import { OpenCode } from "@opencode/sdk"
 type Input = {
   prompt: string
   cwd: string
-  model?: string | null
+  model: string
   sandbox: "read_only" | "workspace_write" | "full_access"
   azure_foundry?: {
     endpoint: string
@@ -52,8 +52,7 @@ async function main() {
   const input = JSON.parse(await Bun.stdin.text()) as Input
   const model = input.azure_foundry
     ? `azure_foundry/${input.azure_foundry.deployment}`
-    : input.model || process.env.OPENCODE_MODEL
-  if (!model) throw new Error("Set OPENCODE_MODEL or configure a model in the agent profile")
+    : input.model
 
   process.env.OPENCODE_DISABLE_PROJECT_CONFIG = "1"
   process.env.OPENCODE_CONFIG_CONTENT = JSON.stringify({

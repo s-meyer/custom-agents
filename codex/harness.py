@@ -26,7 +26,7 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
     model_provider = None
     model = request.model
     if foundry_enabled():
-        endpoint, _, _ = foundry_settings()
+        endpoint, _ = foundry_settings()
         token = foundry_access_token()
         provider_config = {
             "model_providers": {

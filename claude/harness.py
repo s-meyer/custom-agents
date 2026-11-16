@@ -86,7 +86,7 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
     tools, permission_mode = _tool_permissions(request.permissions.sandbox)
     model = request.model
     if foundry_enabled():
-        endpoint, _, _ = foundry_settings()
+        endpoint, _ = foundry_settings()
         os.environ.update(
             {
                 "ANTHROPIC_BASE_URL": f"{endpoint}/anthropic",

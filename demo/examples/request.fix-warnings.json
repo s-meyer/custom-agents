@@ -3,7 +3,7 @@
   "task_id": "T-2026-0001",
   "attempt": 1,
   "agent_profile": { "name": "code-fixer", "version": "1.0.0" },
-  "model": "gpt-5.3-codex",
+  "model": "gpt-6-luna",
   "objective": "Fix all compiler warnings and errors in this project.",
   "repository": "file:///repo",
   "base_branch": "main",

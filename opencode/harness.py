@@ -29,7 +29,7 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
         "sandbox": request.permissions.sandbox,
     }
     if foundry_enabled():
-        endpoint, _, _ = foundry_settings()
+        endpoint, _ = foundry_settings()
         api = os.getenv("AZURE_AI_FOUNDRY_API", "openai").strip().lower()
         if api not in {"openai", "anthropic"}:
             raise HarnessError("AZURE_AI_FOUNDRY_API must be 'openai' or 'anthropic'")

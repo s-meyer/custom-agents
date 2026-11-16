@@ -3,7 +3,7 @@
   "task_id": "T-2026-0002",
   "attempt": 1,
   "agent_profile": { "name": "code-fixer-claude", "version": "1.0.0" },
-  "model": "claude-sonnet-5",
+  "model": "claude-sonnet-5-5",
   "objective": "Fix all compiler warnings and errors in this project.",
   "repository": "file:///repo",
   "base_branch": "main",

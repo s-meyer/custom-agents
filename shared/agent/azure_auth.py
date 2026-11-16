@@ -9,19 +9,18 @@ def foundry_enabled() -> bool:
     return os.getenv("AI_PROVIDER", "").strip().lower() == "azure-foundry"
 
 
-def foundry_settings() -> tuple[str, str, str]:
+def foundry_settings() -> tuple[str, str]:
     endpoint = os.getenv("AZURE_AI_FOUNDRY_ENDPOINT", "").strip().rstrip("/")
-    deployment = os.getenv("AZURE_AI_FOUNDRY_DEPLOYMENT", "").strip()
     scope = os.getenv("AZURE_AI_FOUNDRY_TOKEN_SCOPE", "https://ai.azure.com/.default").strip()
-    if not endpoint or not deployment:
-        raise HarnessError("Azure Foundry requires AZURE_AI_FOUNDRY_ENDPOINT and AZURE_AI_FOUNDRY_DEPLOYMENT")
+    if not endpoint:
+        raise HarnessError("Azure Foundry requires AZURE_AI_FOUNDRY_ENDPOINT")
     if not os.getenv("AZURE_TENANT_ID") or not os.getenv("AZURE_CLIENT_ID") or not os.getenv("AZURE_CLIENT_SECRET"):
         raise HarnessError("Azure Foundry service principal requires AZURE_TENANT_ID, AZURE_CLIENT_ID, and AZURE_CLIENT_SECRET")
-    return endpoint, deployment, scope
+    return endpoint, scope
 
 
 def foundry_access_token() -> str:
-    _, _, scope = foundry_settings()
+    _, scope = foundry_settings()
     try:
         from azure.identity import ClientSecretCredential
 

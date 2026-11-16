@@ -51,7 +51,6 @@ docker compose -f claude/compose.yaml run --rm -T claude-agent run \
 ```sh
 # Add these values to shared/.env:
 # ANTHROPIC_API_KEY=...
-# OPENCODE_MODEL=anthropic/claude-sonnet-5-5
 make -C shared opencode-image
 docker compose -f opencode/compose.yaml run --rm -T opencode-agent run \
   < demo/examples/request.fix-warnings.opencode.json
@@ -64,7 +63,6 @@ All SDK containers can access Azure AI Foundry through a service principal. Add 
 ```dotenv
 AI_PROVIDER=azure-foundry
 AZURE_AI_FOUNDRY_ENDPOINT=https://<resource-name>.services.ai.azure.com
-AZURE_AI_FOUNDRY_DEPLOYMENT=<deployment-name>
 AZURE_TENANT_ID=<tenant-id>
 AZURE_CLIENT_ID=<service-principal-client-id>
 AZURE_CLIENT_SECRET=<service-principal-secret>
@@ -96,7 +94,7 @@ The task contract selects the model used by an agent. `model` is required; profi
 "model": "your-model-or-deployment-name"
 ```
 
-The included profiles default to `gpt-5.3-codex` for Codex, `claude-sonnet-5` for Claude, and `anthropic/claude-sonnet-5-5` for OpenCode. With Azure AI Foundry, omit `model` to use `AZURE_AI_FOUNDRY_DEPLOYMENT`, or set `model` to an explicit deployment name. For reproducible production requests, specify the model explicitly.
+The included test contracts use `gpt-6-luna` for Codex and `claude-sonnet-5-5` for Claude. OpenCode uses its provider-qualified form, `anthropic/claude-sonnet-5-5`. With Azure AI Foundry, set `model` to the deployment name; it remains required.
 
 ## Permissions and outputs
 

@@ -3,6 +3,7 @@
   "task_id": "T-2026-0003",
   "attempt": 1,
   "agent_profile": { "name": "code-fixer-opencode", "version": "1.0.0" },
+  "model": "anthropic/claude-sonnet-5-5",
   "objective": "Fix all compiler warnings and errors in this project.",
   "repository": "file:///repo",
   "base_branch": "main",

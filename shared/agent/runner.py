@@ -231,11 +231,28 @@ async def run(request: AgentTaskRequest) -> AgentTaskResult:
                 report.status,
                 completion_attempt,
             )
+            logger.info(
+                "completion.final.started task_id=%s pass=%s checks=%s",
+                request.task_id,
+                completion_attempt + 1,
+                len(completion.checks),
+            )
             completion_results, artifacts = await _run_completion_policy(
                 completion, task_dir, deadline, output_dir, completion_attempt + 1
             )
             completion_artifacts.extend(artifacts)
-            if all(check.passed for check in completion_results):
+            warnings = sum(check.warning_count for check in completion_results)
+            errors = sum(check.error_count for check in completion_results)
+            passed = all(check.passed for check in completion_results)
+            logger.info(
+                "completion.final.completed task_id=%s pass=%s status=%s warnings=%s errors=%s",
+                request.task_id,
+                completion_attempt + 1,
+                "passed" if passed else "failed",
+                warnings,
+                errors,
+            )
+            if passed:
                 break
             if completion_attempt >= completion.max_repair_attempts:
                 break
@@ -274,6 +291,12 @@ async def run(request: AgentTaskRequest) -> AgentTaskResult:
         result.rationale = report.rationale
         result.open_questions = report.open_questions
         result.artifact_refs.extend(completion_artifacts)
+        completion_warnings = sum(check.warning_count for check in completion_results)
+        completion_errors = sum(check.error_count for check in completion_results)
+        result.usage["completion_checks"] = len(completion_results)
+        result.usage["completion_repair_attempts"] = completion_attempt
+        result.usage["completion_warnings"] = completion_warnings
+        result.usage["completion_errors"] = completion_errors
         for check in completion_results:
             result.criteria_results.append(
                 CriterionResult(
@@ -299,10 +322,18 @@ async def run(request: AgentTaskRequest) -> AgentTaskResult:
         failed_checks = [check for check in completion_results if not check.passed]
         if failed_checks:
             result.status = Status.FAILED
-            result.summary = "Mandatory completion checks failed."
+            result.summary = (
+                "Mandatory completion checks failed "
+                f"(warnings={completion_warnings}, errors={completion_errors})."
+            )
             result.rationale = (
                 "The runner rejected completion after "
                 f"{completion_attempt} repair attempt(s). {_completion_feedback(failed_checks)}"
+            )
+        elif result.status == Status.SUCCEEDED:
+            result.summary = (
+                f"{result.summary} Final completion checks passed "
+                f"(warnings={completion_warnings}, errors={completion_errors})."
             )
         if result.status != Status.ERROR:
             logger.info("repository.publish.started task_id=%s branch=%s", request.task_id, request.work_branch)

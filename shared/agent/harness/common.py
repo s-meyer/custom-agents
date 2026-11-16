@@ -22,6 +22,7 @@ def build_prompt(request: AgentTaskRequest, cwd: Path, completion: CompletionPol
     )
     schema = json.dumps(AgentReport.model_json_schema(), indent=2)
     return f"""Objective: {request.objective}
+Requested model: {request.model or "profile default"}
 Repository is checked out at {cwd} on branch {request.work_branch} (based on {request.base_branch}).
 Acceptance criteria:
 {criteria}

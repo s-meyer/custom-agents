@@ -58,6 +58,7 @@ class AgentTaskRequest(StrictModel):
     task_id: str
     attempt: int = Field(ge=1)
     agent_profile: AgentProfileRef
+    model: str | None = Field(default=None, min_length=1)
     objective: str
     repository: str
     base_branch: str

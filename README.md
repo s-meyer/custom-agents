@@ -87,6 +87,17 @@ AZURE_AI_FOUNDRY_API=anthropic
 chmod 600 shared/.env
 ```
 
+## Model selection
+
+The task contract can select the model used by an agent. `model` takes precedence over the profile default and, with Azure AI Foundry, identifies the deployment to invoke:
+
+```json
+"agent_profile": { "name": "code-fixer", "version": "1.0.0" },
+"model": "your-model-or-deployment-name"
+```
+
+The included profiles default to `gpt-5.3-codex` for Codex, `claude-sonnet-5` for Claude, and `anthropic/claude-sonnet-5-5` for OpenCode. With Azure AI Foundry, omit `model` to use `AZURE_AI_FOUNDRY_DEPLOYMENT`, or set `model` to an explicit deployment name. For reproducible production requests, specify the model explicitly.
+
 ## Permissions and outputs
 
 Tasks carry `permissions.sandbox`:
@@ -114,6 +125,8 @@ The shared runner, rather than an SDK-specific hook, enforces completion checks 
 ```
 
 Checks run in order after every agent response. When a check fails, the runner returns its diagnostics to the agent and gives it another repair attempt. The runner never returns `succeeded` until every check exits successfully and every check configured with `fail_on_warning: true` has no `warning:` or `error:` output. Each check receives an argument array (`argv`) rather than a shell command string. Completion checks require `workspace_write` or `full_access` because builds commonly write outputs.
+
+The JSON logs make the final verification explicit with `completion.final.started` and `completion.final.completed`. The final result's `usage` object includes `completion_checks`, `completion_repair_attempts`, `completion_warnings`, and `completion_errors`; each command's full output is available as a completion-log artifact.
 
 ## Demonstrate a failed compiler run
 

@@ -24,11 +24,11 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
     }[request.permissions.sandbox]
     provider_config = None
     model_provider = None
-    model = profile.model
+    model = request.model or profile.model
     if foundry_enabled():
         endpoint, deployment, _ = foundry_settings()
         token = foundry_access_token()
-        model = model or deployment
+        model = request.model or deployment
         provider_config = {
             "model_providers": {
                 "azure_foundry": {

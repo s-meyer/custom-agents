@@ -18,6 +18,7 @@
 | FR-011 | The demo includes a standalone image with an ARM32 cross-compiler that demonstrates the failed build without model credentials. | Functional | Should | Implemented | `docker build` and `docker run … make` |
 | FR-012 | A task can configure ordered completion checks, warning policy, timeouts, and repair attempts through a provider-neutral contract field. | Functional | Must | Implemented | Validate example tasks and inspect the runner's completion artifacts |
 | FR-013 | The runner must not return `succeeded` unless every required completion check passes; it must return failures to the agent for repair up to the configured limit. | Functional | Must | Implemented | Run a task with an initially failing build and inspect the final result and completion logs |
+| FR-014 | A task can specify the model identifier used by its agent; it takes precedence over the profile default and over the Azure deployment fallback. | Functional | Must | Implemented | Validate a task with `model` and inspect the adapter invocation |
 | NFR-001 | Secrets must not appear in Docker images, logs, or the Git repository. | Security | Must | Implemented | Inspect `.gitignore`, Dockerfiles, and logging code |
 | NFR-002 | A task must not edit the host repository directly; changes happen in the container workspace and are published as a Git branch. | Security | Must | Implemented | Inspect mounts and Git workflow |
 | NFR-003 | Provider-specific code remains in `codex/`, `claude/`, and `opencode/`; contract and workflow remain in `shared/`. | Maintainability | Should | Implemented | Inspect directory structure |
@@ -32,5 +33,6 @@
 | Flexible model access | FR-009 through FR-010 |
 | Reproducible demonstration | FR-011 |
 | Verified completion | FR-012 through FR-013 |
+| Reproducible model selection | FR-014 |
 
 New requirements receive a sequential ID, testable wording, and one verification method. This lightweight traceability follows the recommendation to track requirements with type, priority, status, and verification. [NASA SRS guidance](https://swehb.nasa.gov/spaces/SWEHBVD/pages/140640605/SRS%2B-%2BSoftware%2BRequirements%2BSpecification)

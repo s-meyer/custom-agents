@@ -25,7 +25,7 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
             f"{build_prompt(request, cwd, request.completion or profile.default_completion)}"
         ),
         "cwd": str(cwd),
-        "model": profile.model,
+        "model": request.model or profile.model,
         "sandbox": request.permissions.sandbox,
     }
     if foundry_enabled():
@@ -35,7 +35,7 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
             raise HarnessError("AZURE_AI_FOUNDRY_API must be 'openai' or 'anthropic'")
         payload["azure_foundry"] = {
             "endpoint": endpoint,
-            "deployment": profile.model or deployment,
+            "deployment": request.model or deployment,
             "access_token": foundry_access_token(),
             "api": api,
         }

@@ -28,6 +28,7 @@ The container accepts a versioned JSON task, works on a fresh Git branch, and re
 - A provider-neutral completion policy that runs required build checks and returns failures to the agent for repair.
 - Structured progress logs on `stderr`.
 - Model access through native provider credentials or an Azure AI Foundry service principal.
+- Per-task model selection, including Azure AI Foundry deployment names.
 - An intentionally broken ARM32 C demo repository and separate compiler image.
 
 ### Out of scope

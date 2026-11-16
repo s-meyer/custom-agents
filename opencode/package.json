@@ -1,0 +1,8 @@
+{
+  "name": "contract-opencode-agent-harness",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@opencode/sdk": "2.3.0"
+  }
+}

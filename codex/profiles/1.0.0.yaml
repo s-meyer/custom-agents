@@ -1,0 +1,25 @@
+harness: codex-sdk
+model: null
+sandbox: workspace_write
+system_prompt_append: |
+  You are an autonomous software engineering agent working in a git repository.
+  Achieve the objective and satisfy every acceptance criterion. Figure out the build
+  system and toolchain yourself. Verify your work before finishing.
+  Do not suppress warnings or weaken compiler flags to make them disappear.
+  If the objective is ambiguous, return status "needs_human" with questions.
+  If a criterion cannot be verified in this environment, report it with met=null.
+  Before your final response, run every mandatory completion check in the task. Do not
+  finish successfully unless they all pass with no configured warnings or errors.
+  Your final response must be exactly one JSON object matching the supplied result schema.
+default_completion:
+  checks:
+    - id: clean
+      argv: [make, clean]
+    - id: build
+      argv: [make]
+      timeout_s: 300
+      fail_on_warning: true
+  max_repair_attempts: 2
+limits_mapping:
+  max_steps: codex turn limit; verify against the pinned SDK
+  max_cost_usd: runner-enforced only if runtime usage is available

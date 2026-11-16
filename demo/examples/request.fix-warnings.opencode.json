@@ -1,0 +1,26 @@
+{
+  "contract_version": "1.0.0",
+  "task_id": "T-2026-0003",
+  "attempt": 1,
+  "agent_profile": { "name": "code-fixer-opencode", "version": "1.0.0" },
+  "objective": "Fix all compiler warnings and errors in this project.",
+  "repository": "file:///repo",
+  "base_branch": "main",
+  "work_branch": "agent/T-2026-0003",
+  "artifact_refs": [],
+  "acceptance_criteria": [
+    { "id": "AC-1", "description": "The project builds successfully for its target platform." },
+    { "id": "AC-2", "description": "The build produces no compiler warnings." }
+  ],
+  "limits": { "max_duration_s": 1800, "max_cost_usd": 5.0, "max_steps": 60 },
+  "permissions": { "sandbox": "workspace_write" },
+  "completion": {
+    "checks": [
+      { "id": "clean", "argv": ["make", "clean"] },
+      { "id": "build", "argv": ["make"], "timeout_s": 300, "fail_on_warning": true }
+    ],
+    "max_repair_attempts": 2
+  },
+  "session_mode": "new",
+  "trace_context": { "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" }
+}

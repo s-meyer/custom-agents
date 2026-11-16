@@ -1,0 +1,10 @@
+services:
+  claude-agent:
+    build:
+      context: ..
+      dockerfile: claude/Dockerfile
+    image: claude-agent-container:dev
+    env_file: ../shared/.env
+    volumes:
+      - ../shared/work/demo-repo.git:/repo
+      - ../shared/out:/output

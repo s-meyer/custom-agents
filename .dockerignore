@@ -1,0 +1,16 @@
+.env
+shared/.env
+shared/codex-auth/
+shared/work/
+shared/out/
+**/__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+node_modules/
+.git/
+.vscode/
+.idea/
+.DS_Store
+*.log

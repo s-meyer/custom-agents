@@ -1,0 +1,13 @@
+services:
+  agent:
+    build:
+      context: ..
+      dockerfile: codex/Dockerfile
+    image: codex-agent-container:dev
+    env_file: ../shared/.env
+    environment:
+      CODEX_AUTH_MOUNT: /codex-auth
+    volumes:
+      - ../shared/work/demo-repo.git:/repo
+      - ../shared/out:/output
+      - ${CODEX_HOST_HOME:-../shared/codex-auth}:/codex-auth:ro

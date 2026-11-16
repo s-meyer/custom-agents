@@ -1,0 +1,46 @@
+{
+  "editor.formatOnSave": true,
+  "editor.rulers": [100],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.ruff": "explicit",
+    "source.organizeImports.ruff": "explicit"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true
+  },
+  "[c]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/node_modules": true,
+    "shared/out": true,
+    "shared/work": true
+  },
+  "files.watcherExclude": {
+    "**/__pycache__/**": true,
+    "**/node_modules/**": true,
+    "shared/out/**": true,
+    "shared/work/**": true
+  },
+  "search.exclude": {
+    "**/__pycache__": true,
+    "**/node_modules": true,
+    "shared/out": true,
+    "shared/work": true
+  },
+  "yaml.schemas": {
+    "https://json.schemastore.org/compose-spec.json": [
+      "codex/compose.yaml",
+      "claude/compose.yaml",
+      "opencode/compose.yaml"
+    ]
+  }
+}

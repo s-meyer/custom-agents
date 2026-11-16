@@ -1,0 +1,10 @@
+services:
+  opencode-agent:
+    build:
+      context: ..
+      dockerfile: opencode/Dockerfile
+    image: opencode-agent-container:dev
+    env_file: ../shared/.env
+    volumes:
+      - ../shared/work/demo-repo.git:/repo
+      - ../shared/out:/output

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-agent-container"
+version = "0.1.0"
+description = "Contract-driven Codex SDK agent container"
+requires-python = ">=3.12"
+dependencies = [
+  "openai-codex==0.154.0",
+  "azure-identity>=1.19,<2",
+  "pydantic>=2.10,<3",
+  "PyYAML>=6.0,<7",
+  "starlette>=0.45,<1",
+  "uvicorn[standard]>=0.34,<1",
+]
+
+[project.scripts]
+agent = "agent.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agent*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

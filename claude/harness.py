@@ -105,7 +105,6 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
         max_turns=request.limits.max_steps,
         max_budget_usd=request.limits.max_cost_usd,
         setting_sources=[],
-        output_format={"type": "json_schema", "schema": AgentReport.model_json_schema()},
     )
     logger.info(
         "claude.query.started model=%s workspace=%s sandbox=%s tools=%s",
@@ -115,7 +114,6 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
         ",".join(tools),
     )
     final_text: str | None = None
-    structured_output: object | None = None
     tool_counts: dict[str, int] = {}
     async for message in query(
         prompt=build_prompt(request, cwd, request.completion or profile.default_completion), options=options
@@ -136,22 +134,14 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
                 message.total_cost_usd,
             )
             if message.is_error:
+                logger.error("claude.query.failed subtype=%s", message.subtype)
                 raise HarnessError(message.result or f"Claude SDK finished with {message.subtype}")
             final_text = message.result
-            structured_output = getattr(message, "structured_output", None)
 
     logger.info(
         "claude.activity.summary tools=%s",
         ",".join(f"{activity}={count}" for activity, count in sorted(tool_counts.items())) or "none",
     )
-    if structured_output is not None:
-        try:
-            report = AgentReport.model_validate(structured_output)
-            logger.info("claude.report.validated source=structured_output")
-            return report
-        except Exception:
-            logger.warning("claude.report.invalid source=structured_output")
-
     if not final_text:
         raise HarnessError("Claude SDK did not return a final result")
     raw = final_text.strip()
@@ -166,6 +156,15 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
         logger.info("claude.report.validated source=final_text")
         return report
     except Exception as exc:
+        start = raw.find("{")
+        if start > 0:
+            try:
+                payload, _ = json.JSONDecoder().raw_decode(raw[start:])
+                report = AgentReport.model_validate(payload)
+                logger.info("claude.report.validated source=embedded_json")
+                return report
+            except (json.JSONDecodeError, ValueError):
+                pass
         logger.error(
             "claude.report.invalid source=final_text chars=%s json_object=%s",
             len(raw),

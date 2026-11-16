@@ -99,6 +99,8 @@ class _HumanActivityFormatter(logging.Formatter):
             return "Claude returned an invalid task report; final verification cannot start"
         if event == "claude.query.completed":
             return f"Claude finished its response ({_value(message, 'turns')} turns)"
+        if event == "claude.query.failed":
+            return "Claude could not produce a valid final report"
         if event == "agent.run.completed":
             return f"Agent phase complete (reported: {_value(message, 'status')})"
         if event == "completion.final.started":

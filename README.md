@@ -2,13 +2,13 @@
 
 This repository provides three separate agent containers. They share an execution contract, Git workflow, logs, and demo project.
 
-| Directory | SDK | Authentication |
-| --- | --- | --- |
-| [`codex/`](codex/) | OpenAI Codex SDK | Codex login, OpenAI API, or Azure AI Foundry |
-| [`claude/`](claude/) | Claude Agent SDK | Anthropic API or Azure AI Foundry |
-| [`opencode/`](opencode/) | OpenCode SDK | Anthropic API or Azure AI Foundry |
-| [`shared/`](shared/) | Shared runner, contract, and local runtime data | — |
-| [`demo/`](demo/) | Intentionally broken ARM32 C project | — |
+| Directory | SDK | Runtime | Authentication |
+| --- | --- | --- | --- |
+| [`codex/`](codex/) | OpenAI Codex SDK | Python | Codex login, OpenAI API, or Azure AI Foundry |
+| [`claude/`](claude/) | Claude Agent SDK | Python | Anthropic API or Azure AI Foundry |
+| [`opencode/`](opencode/) | OpenCode SDK | TypeScript/Bun | Anthropic API or Azure AI Foundry |
+| [`shared/`](shared/) | Contract and local runtime data | Python runner for Codex and Claude | — |
+| [`demo/`](demo/) | Intentionally broken ARM32 C project | C | — |
 
 ## Setup
 
@@ -47,6 +47,8 @@ docker compose -f claude/compose.yaml run --rm -T claude-agent run \
 ```
 
 ## OpenCode SDK
+
+The OpenCode container is TypeScript-native: it uses the official `@opencode/sdk` directly and does not include the shared Python runner.
 
 ```sh
 # Add these values to shared/.env:

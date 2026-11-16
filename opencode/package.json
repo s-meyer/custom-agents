@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@opencode/sdk": "2.3.0"
+    "@azure/identity": "^4.13.0",
+    "@opencode/sdk": "2.3.0",
+    "yaml": "^2.8.2"
   }
 }

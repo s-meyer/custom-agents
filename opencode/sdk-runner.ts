@@ -89,8 +89,8 @@ async function main() {
     console.error(JSON.stringify({ event: "session.created", session_id: session.id, model }))
     await opencode.sessions.prompt({ sessionID: session.id, text: input.prompt })
 
-    let messages: any = await opencode.sessions.messages({ sessionID: session.id })
-    if (!Array.isArray(messages)) messages = messages?.data ?? messages?.messages ?? []
+    const response = await opencode.message.list({ sessionID: session.id })
+    const messages: any[] = response.data ?? []
     const assistant = [...messages].reverse().find((message: any) => message?.info?.role === "assistant")
     const final = textParts(assistant) || textParts(assistant?.parts)
     if (!final) throw new Error("OpenCode session did not return an assistant text response")

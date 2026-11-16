@@ -15,6 +15,45 @@ from agent.azure_auth import foundry_access_token, foundry_enabled, foundry_sett
 logger = logging.getLogger(__name__)
 
 
+def _workspace_path(value: object, cwd: Path) -> str | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return str(Path(value).resolve().relative_to(cwd.resolve()))
+    except ValueError:
+        return Path(value).name or "external-path"
+
+
+def _shell_activity(command: object) -> str:
+    if not isinstance(command, str):
+        return "shell"
+    normalized = command.lstrip().lower()
+    if normalized.startswith(("make", "ninja", "cmake")):
+        return "build"
+    if normalized.startswith(("arm-linux-gnueabihf-gcc", "gcc", "clang")):
+        return "compile"
+    if normalized.startswith("git "):
+        return "git"
+    if normalized.startswith(("ls", "find", "rg", "grep", "sed", "head", "tail", "cat")):
+        return "inspect"
+    return "shell"
+
+
+def _tool_activity(block: ToolUseBlock, cwd: Path) -> tuple[str, str]:
+    tool_input = getattr(block, "input", {})
+    if not isinstance(tool_input, dict):
+        return block.name, ""
+    if block.name == "Bash":
+        return _shell_activity(tool_input.get("command")), ""
+    if block.name in {"Read", "Write", "Edit"}:
+        path = _workspace_path(tool_input.get("file_path") or tool_input.get("path"), cwd)
+        return block.name.lower(), f" file={path}" if path else ""
+    if block.name in {"Glob", "Grep"}:
+        path = _workspace_path(tool_input.get("path"), cwd)
+        return block.name.lower(), f" path={path}" if path else ""
+    return block.name.lower(), ""
+
+
 def _tool_permissions(sandbox: str) -> tuple[list[str], str]:
     read_tools = ["Read", "Glob", "Grep"]
     edit_tools = ["Write", "Edit"]
@@ -51,6 +90,7 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
         max_turns=request.limits.max_steps,
         max_budget_usd=request.limits.max_cost_usd,
         setting_sources=[],
+        output_format={"type": "json_schema", "schema": AgentReport.model_json_schema()},
     )
     logger.info(
         "claude.query.started model=%s workspace=%s sandbox=%s tools=%s",
@@ -60,15 +100,19 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
         ",".join(tools),
     )
     final_text: str | None = None
+    structured_output: object | None = None
+    tool_counts: dict[str, int] = {}
     async for message in query(
         prompt=build_prompt(request, cwd, request.completion or profile.default_completion), options=options
     ):
         if isinstance(message, AssistantMessage):
             for block in message.content:
                 if isinstance(block, ToolUseBlock):
-                    logger.info("claude.tool.started tool=%s", block.name)
+                    activity, details = _tool_activity(block, cwd)
+                    tool_counts[activity] = tool_counts.get(activity, 0) + 1
+                    logger.info("claude.tool.started tool=%s activity=%s%s", block.name, activity, details)
                 elif isinstance(block, TextBlock):
-                    logger.info("claude.assistant.message_received")
+                    logger.info("claude.assistant.message_received chars=%s", len(block.text))
         elif isinstance(message, ResultMessage):
             logger.info(
                 "claude.query.completed subtype=%s turns=%s cost_usd=%s",
@@ -79,6 +123,19 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
             if message.is_error:
                 raise HarnessError(message.result or f"Claude SDK finished with {message.subtype}")
             final_text = message.result
+            structured_output = getattr(message, "structured_output", None)
+
+    logger.info(
+        "claude.activity.summary tools=%s",
+        ",".join(f"{activity}={count}" for activity, count in sorted(tool_counts.items())) or "none",
+    )
+    if structured_output is not None:
+        try:
+            report = AgentReport.model_validate(structured_output)
+            logger.info("claude.report.validated source=structured_output")
+            return report
+        except Exception:
+            logger.warning("claude.report.invalid source=structured_output")
 
     if not final_text:
         raise HarnessError("Claude SDK did not return a final result")
@@ -90,6 +147,13 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
     if raw.endswith("```"):
         raw = raw[:-3]
     try:
-        return AgentReport.model_validate_json(raw.strip())
+        report = AgentReport.model_validate_json(raw.strip())
+        logger.info("claude.report.validated source=final_text")
+        return report
     except Exception as exc:
+        logger.error(
+            "claude.report.invalid source=final_text chars=%s json_object=%s",
+            len(raw),
+            raw.startswith("{"),
+        )
         raise HarnessError("Claude final response was not valid AgentReport JSON") from exc

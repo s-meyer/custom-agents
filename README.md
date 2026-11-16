@@ -128,6 +128,8 @@ Checks run in order after every agent response. When a check fails, the runner r
 
 The JSON logs make the final verification explicit with `completion.final.started` and `completion.final.completed`. The final result's `usage` object includes `completion_checks`, `completion_repair_attempts`, `completion_warnings`, and `completion_errors`; each command's full output is available as a completion-log artifact.
 
+Claude runs also emit structured activity events while the SDK is working. For example, `claude.tool.started tool=Read activity=read file=src/util.c` or `claude.tool.started tool=Bash activity=build` identifies the kind of work without logging prompts, command text, source contents, or credentials. The end of the run emits `claude.activity.summary` and either `claude.report.validated` or `claude.report.invalid`; only a validated report can start the mandatory completion checks.
+
 ## Demonstrate a failed compiler run
 
 The demo project deliberately has warnings and a compiler error. A separate compiler image demonstrates the failure without agent SDKs or model credentials:

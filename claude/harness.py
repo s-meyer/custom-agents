@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from pathlib import Path
 
 from claude_agent_sdk import AssistantMessage, ClaudeAgentOptions, ResultMessage, TextBlock, ToolUseBlock, query
@@ -39,12 +40,26 @@ def _shell_activity(command: object) -> str:
     return "shell"
 
 
+def _command_summary(command: object) -> str:
+    """Keep an activity log useful without allowing secrets into it."""
+    if not isinstance(command, str):
+        return "shell command"
+    summary = " ".join(command.split())
+    summary = re.sub(
+        r"(?i)\b(api[_-]?key|token|secret|password|authorization)\s*=\s*(?:'[^']*'|\"[^\"]*\"|\S+)",
+        r"\1=***",
+        summary,
+    )
+    return summary[:160] + ("…" if len(summary) > 160 else "")
+
+
 def _tool_activity(block: ToolUseBlock, cwd: Path) -> tuple[str, str]:
     tool_input = getattr(block, "input", {})
     if not isinstance(tool_input, dict):
         return block.name, ""
     if block.name == "Bash":
-        return _shell_activity(tool_input.get("command")), ""
+        command = tool_input.get("command")
+        return _shell_activity(command), f" command={_command_summary(command)}"
     if block.name in {"Read", "Write", "Edit"}:
         path = _workspace_path(tool_input.get("file_path") or tool_input.get("path"), cwd)
         return block.name.lower(), f" file={path}" if path else ""

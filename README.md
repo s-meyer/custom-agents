@@ -108,7 +108,7 @@ Tasks carry `permissions.sandbox`:
 | `workspace_write` | Modify the workspace; default |
 | `full_access` | SDK-specific unrestricted access |
 
-With `workspace_write`, OpenCode permits reading, editing, `make`, and `arm-linux-gnueabihf-gcc`. Containers write JSON logs to `stderr`; the result, transcript, and patch are written to `shared/out/<task-id>/<attempt>/`.
+With `workspace_write`, OpenCode permits reading, editing, `make`, and `arm-linux-gnueabihf-gcc`. Containers write a human-readable activity log to `stderr` by default; the result, transcript, and patch are written to `shared/out/<task-id>/<attempt>/`. Set `LOG_FORMAT=json` to retain machine-readable JSON logs for log collectors.
 
 ## Mandatory completion checks
 
@@ -126,9 +126,9 @@ The shared runner, rather than an SDK-specific hook, enforces completion checks 
 
 Checks run in order after every agent response. When a check fails, the runner returns its diagnostics to the agent and gives it another repair attempt. The runner never returns `succeeded` until every check exits successfully and every check configured with `fail_on_warning: true` has no `warning:` or `error:` output. Each check receives an argument array (`argv`) rather than a shell command string. Completion checks require `workspace_write` or `full_access` because builds commonly write outputs.
 
-The JSON logs make the final verification explicit with `completion.final.started` and `completion.final.completed`. The final result's `usage` object includes `completion_checks`, `completion_repair_attempts`, `completion_warnings`, and `completion_errors`; each command's full output is available as a completion-log artifact.
+The activity log makes final verification explicit with a `Running mandatory final verification` line followed by an individual result for each check and a final warning/error total. The final result's `usage` object includes `completion_checks`, `completion_repair_attempts`, `completion_warnings`, and `completion_errors`; each command's full output is available as a completion-log artifact.
 
-Claude runs also emit structured activity events while the SDK is working. For example, `claude.tool.started tool=Read activity=read file=src/util.c` or `claude.tool.started tool=Bash activity=build` identifies the kind of work without logging prompts, command text, source contents, or credentials. The end of the run emits `claude.activity.summary` and either `claude.report.validated` or `claude.report.invalid`; only a validated report can start the mandatory completion checks.
+Claude activity identifies safe, high-level work such as `Claude: Reading src/util.c`, `Claude: Editing src/util.c`, or `Claude: Running a build (make)`. Command summaries are limited in length and redact credential assignments; prompts and source contents are not logged. The end of the run says whether Claude returned a valid task report; only a validated report can start the mandatory completion checks.
 
 ## Demonstrate a failed compiler run
 

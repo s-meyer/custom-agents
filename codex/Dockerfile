@@ -15,7 +15,8 @@ RUN pip install --no-cache-dir .
 COPY codex/profiles/ ./profiles/
 COPY shared/docker-entrypoint.sh /usr/local/bin/agent-entrypoint
 ENV AGENT_MODE=run AGENT_PROFILES_DIR=/app/profiles \
-    WORKSPACE_DIR=/workspace OUTPUT_DIR=/output PORT=8088 CODEX_HOME=/home/agent/.codex
+    WORKSPACE_DIR=/workspace OUTPUT_DIR=/output PORT=8088 CODEX_HOME=/home/agent/.codex \
+    CODEX_SANDBOX_BOUNDARY=container
 RUN mkdir -p /workspace /output /home/agent/.codex \
     && chown -R agent:agent /workspace /output /home/agent/.codex \
     && git config --system user.name "agent" \

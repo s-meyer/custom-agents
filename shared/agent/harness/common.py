@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shlex
 from pathlib import Path
 
@@ -70,3 +71,30 @@ def _strip_code_fence(raw: str) -> str:
         raw = raw.removeprefix("```json").removeprefix("```")
         raw = raw.removesuffix("```")
     return raw.strip()
+
+
+SECRET_ASSIGNMENT = re.compile(
+    r"(?i)\b(api[_-]?key|token|secret|password|authorization)\s*=\s*(?:'[^']*'|\"[^\"]*\"|\S+)"
+)
+MAX_COMMAND_SUMMARY = 160
+
+
+def command_summary(command: object) -> str:
+    """One-line, secret-masked, length-capped rendering of a shell command for logs."""
+    if not isinstance(command, str):
+        return "shell command"
+    summary = SECRET_ASSIGNMENT.sub(r"\1=***", " ".join(command.split()))
+    if len(summary) > MAX_COMMAND_SUMMARY:
+        return summary[:MAX_COMMAND_SUMMARY] + "…"
+    return summary
+
+
+def workspace_path(value: object, cwd: Path) -> str | None:
+    """Workspace-relative path for logs; paths outside the workspace are reduced to their name."""
+    if not isinstance(value, str) or not value:
+        return None
+    workspace = cwd.resolve()
+    path = (workspace / value).resolve()  # absolute values replace the workspace prefix
+    if path.is_relative_to(workspace):
+        return str(path.relative_to(workspace))
+    return path.name or "external-path"

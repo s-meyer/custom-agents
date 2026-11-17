@@ -97,6 +97,77 @@ class _HumanActivityFormatter(logging.Formatter):
             return "Claude returned a valid task report; starting final verification"
         if event == "claude.report.invalid":
             return "Claude returned an invalid task report; final verification cannot start"
+        if event == "codex.query.started":
+            return f"Codex is starting (model: {_value(message, 'model')})"
+        if event == "codex.sandbox.selected":
+            return f"Codex sandbox: container boundary (contract: {_value(message, 'contract')})"
+        if event == "codex.sandbox.not_enforced":
+            return "Warning: read_only is not enforced for Codex shell commands inside the container"
+        if event == "codex.tool.started":
+            activity = _value(message, "activity")
+            if activity == "read":
+                return f"Codex: Reading {_value(message, 'file')}"
+            if activity == "search":
+                return f"Codex: Searching {_value(message, 'path')} for \"{message.partition('query=')[2]}\""
+            if activity == "list":
+                return f"Codex: Listing files in {_value(message, 'path')}"
+            if activity == "edit":
+                return f"Codex: Editing {_value(message, 'file')}"
+            command = message.partition("command=")[2]
+            labels = {
+                "inspect": "Inspecting the workspace",
+                "build": "Running a build",
+                "compile": "Compiling",
+                "git": "Checking Git state",
+                "shell": "Running a shell task",
+                "mcp": f"Calling MCP tool {_value(message, 'tool')}",
+                "web_search": "Searching the web",
+            }
+            action = labels.get(activity, f"Using {activity or 'a tool'}")
+            return f"Codex: {action}{f' ({command})' if command else ''}"
+        if event == "codex.file.changed":
+            verbs = {"add": "Created", "delete": "Deleted", "update": "Edited"}
+            status = _value(message, "status")
+            suffix = "" if status == "completed" else f" [{status}]"
+            return (
+                f"Codex: {verbs.get(_value(message, 'kind'), 'Changed')} {message.partition('file=')[2]} "
+                f"(+{_value(message, 'added')} -{_value(message, 'removed')}){suffix}"
+            )
+        if event == "codex.tool.failed":
+            return (
+                f"Codex: {_value(message, 'activity')} command exited with {_value(message, 'exit_code')}: "
+                f"{message.partition('output=')[2]}"
+            )
+        if event == "codex.tool.completed":
+            return f"Codex: command finished (exit {_value(message, 'exit_code')}, {_value(message, 'duration_ms')}ms)"
+        if event == "codex.assistant.commentary":
+            return f"Codex says: {message.partition('text=')[2]}"
+        if event == "codex.reasoning.summary":
+            return f"Codex thinking: {message.partition('text=')[2]}"
+        if event == "codex.reasoning.started":
+            return "Codex is reasoning"
+        if event == "codex.plan.updated":
+            return (
+                f"Codex plan: {_value(message, 'completed')}/{_value(message, 'total')} steps done; "
+                f"now: {message.partition('text=')[2]}"
+            )
+        if event == "codex.assistant.message_received":
+            return "Codex is writing its final answer"
+        if event == "codex.turn.error":
+            return f"Codex reported a recoverable error: {message.partition('message=')[2]}"
+        if event == "codex.activity.summary":
+            return f"Codex activity complete ({message.partition('tools=')[2]})"
+        if event == "codex.turn.completed":
+            return (
+                f"Codex finished its response ({_value(message, 'status')}, "
+                f"{_value(message, 'input_tokens')} in / {_value(message, 'output_tokens')} out tokens)"
+            )
+        if event == "codex.report.validated":
+            return "Codex returned a valid task report; starting final verification"
+        if event == "codex.report.invalid":
+            return "Codex returned an invalid task report; final verification cannot start"
+        if event == "codex.query.failed":
+            return "Codex could not produce a valid final report"
         if event == "claude.query.completed":
             return f"Claude finished its response ({_value(message, 'turns')} turns)"
         if event == "claude.query.failed":
@@ -141,6 +212,11 @@ def _configure_logging() -> None:
     log_format = os.getenv("LOG_FORMAT", "human").lower()
     handler.setFormatter(_JsonFormatter() if log_format == "json" else _HumanActivityFormatter())
     logging.basicConfig(level=level, handlers=[handler], force=True)
+    # Azure SDK HTTP request/response dumps are INFO-level noise; keep only warnings.
+    # Set LOG_LEVEL_AZURE=INFO to see them when debugging authentication.
+    third_party = getattr(logging, os.getenv("LOG_LEVEL_AZURE", "WARNING").upper(), logging.WARNING)
+    for name in ("azure", "msal"):
+        logging.getLogger(name).setLevel(third_party)
 
 
 def _invalid_result(message: str) -> AgentTaskResult:
@@ -167,6 +243,12 @@ def main() -> None:
         uvicorn.run("agent.server:app", host="0.0.0.0", port=int(os.getenv("PORT", "8088")))
         return
     if mode == "smoke":
+        from agent.azure_auth import gateway_access_token, gateway_enabled
+
+        if gateway_enabled():
+            gateway_access_token()
+            print("Azure gateway Entra credentials are valid")
+            return
         if os.getenv("AI_PROVIDER", "").strip().lower() == "azure-foundry":
             from agent.azure_auth import foundry_access_token
 

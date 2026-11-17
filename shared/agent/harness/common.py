@@ -42,3 +42,31 @@ Return exactly one JSON object matching this schema, without markdown fences:
 
 def build_system_prompt(profile: AgentProfile) -> str:
     return profile.system_prompt_append
+
+
+def parse_report_text(text: str, source: str) -> AgentReport:
+    """Parse an AgentReport from free-form agent output.
+
+    Accepts a bare JSON object, one wrapped in a markdown code fence, or one
+    preceded by prose. Raises HarnessError naming `source` when nothing validates.
+    """
+    raw = _strip_code_fence(text.strip())
+    try:
+        return AgentReport.model_validate_json(raw)
+    except ValueError as exc:
+        error = exc
+    start = raw.find("{")
+    if start != -1:
+        try:
+            payload, _ = json.JSONDecoder().raw_decode(raw[start:])
+            return AgentReport.model_validate(payload)
+        except ValueError:
+            pass
+    raise HarnessError(f"{source} final response was not valid AgentReport JSON") from error
+
+
+def _strip_code_fence(raw: str) -> str:
+    if raw.startswith("```"):
+        raw = raw.removeprefix("```json").removeprefix("```")
+        raw = raw.removesuffix("```")
+    return raw.strip()

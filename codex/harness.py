@@ -9,7 +9,7 @@ from openai_codex import AsyncCodex, Sandbox
 from agent.contract import AgentReport, AgentTaskRequest
 from agent.profiles import AgentProfile
 from agent.azure_auth import foundry_access_token, foundry_enabled, foundry_settings
-from agent.harness.common import HarnessError, build_prompt
+from agent.harness.common import HarnessError, build_prompt, parse_report_text
 
 logger = logging.getLogger(__name__)
 
@@ -60,14 +60,4 @@ async def run(request: AgentTaskRequest, profile: AgentProfile, cwd: Path) -> Ag
             f"{profile.system_prompt_append}\n\n{build_prompt(request, cwd, request.completion or profile.default_completion)}"
         )
         logger.info("codex.response.received")
-    raw = result.final_response.strip()
-    if raw.startswith("```json"):
-        raw = raw[7:]
-    elif raw.startswith("```"):
-        raw = raw[3:]
-    if raw.endswith("```"):
-        raw = raw[:-3]
-    try:
-        return AgentReport.model_validate_json(raw.strip())
-    except Exception as exc:
-        raise HarnessError("Codex final response was not valid AgentReport JSON") from exc
+    return parse_report_text(result.final_response, source="Codex")

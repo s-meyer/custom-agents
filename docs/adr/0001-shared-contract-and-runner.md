@@ -1,6 +1,6 @@
 # ADR-0001: Use a shared contract and runner for all adapters
 
-**Status:** Accepted
+**Status:** Accepted (the runner part for the OpenCode adapter is superseded by [ADR-0005](0005-opencode-typescript-native-runner.md); the shared contract and Git workflow remain in force)
 **Date:** 2026-11-16
 
 ## Context

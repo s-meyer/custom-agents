@@ -58,6 +58,8 @@ docker compose -f opencode/compose.yaml run --rm -T opencode-agent run \
   < demo/examples/request.fix-warnings.opencode.json
 ```
 
+OpenCode activity is visible line by line: `Agent tool (tool=read target=…/src/util.c)` reports each tool call, `Agent tool failed (… reason=permission.rejected)` reports denials and errors, and `Agent step finished (step=4 tokens_out=851 cost=$0.0135)` is a per-turn heartbeat with token and cost totals. `Agent run summary (steps=5 tools=11)` closes the run, and the same lines are recorded in the transcript artifact.
+
 ## Azure AI Foundry
 
 All SDK containers can access Azure AI Foundry through a service principal. Add the following values to `shared/.env`:
@@ -108,7 +110,11 @@ Tasks carry `permissions.sandbox`:
 | `workspace_write` | Modify the workspace; default |
 | `full_access` | SDK-specific unrestricted access |
 
-With `workspace_write`, OpenCode permits reading, editing, `make`, and `arm-linux-gnueabihf-gcc`. Containers write a human-readable activity log to `stderr` by default; the result, transcript, and patch are written to `shared/out/<task-id>/<attempt>/`. Set `LOG_FORMAT=json` to retain machine-readable JSON logs for log collectors.
+With `workspace_write`, OpenCode permits reading, editing, `git status`, `git diff`, `git log`, `make`, and `arm-linux-gnueabihf-gcc`. Shell statements outside that list (for example `ls`, `cat`, or piped segments) are denied, and compound commands are checked statement by statement. Containers write a human-readable activity log to `stderr` by default; the result, transcript, and patch are written to `shared/out/<task-id>/<attempt>/`. Set `LOG_FORMAT=json` to retain machine-readable JSON logs for log collectors.
+
+## Task limits
+
+`limits.max_duration_s` is enforced as a hard deadline: the runner aborts the agent run and returns an `error` result when it expires. `limits.max_steps` and `limits.max_cost_usd` are validated by the contract but are not enforced by the current runners; agents are expected to budget themselves within the deadline.
 
 ## Mandatory completion checks
 

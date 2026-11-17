@@ -92,8 +92,14 @@ async function runCommand(argv: string[], cwd: string, timeoutMs?: number) {
 
 function assertRequest(value: unknown): asserts value is Request {
   const request = value as Partial<Request>
-  if (!request || typeof request !== "object" || !request.task_id || !request.model || !request.agent_profile || !request.limits) {
-    throw new Error("Invalid task contract: task_id, agent_profile, model, and limits are required")
+  const valid =
+    !!request && typeof request === "object" &&
+    !!request.task_id && !!request.attempt && !!request.agent_profile && !!request.model &&
+    !!request.objective && !!request.repository && !!request.base_branch && !!request.work_branch &&
+    Array.isArray(request.acceptance_criteria) && request.acceptance_criteria.length > 0 &&
+    !!request.limits?.max_duration_s && !!request.session_mode
+  if (!valid) {
+    throw new Error("Invalid task contract: task_id, attempt, agent_profile, model, objective, repository, base_branch, work_branch, acceptance_criteria, limits.max_duration_s, and session_mode are required")
   }
 }
 
@@ -256,7 +262,7 @@ async function runAgent(request: Request, profile: Profile, completion: Completi
         if (!data || data.sessionID !== session.id) continue
         const type = (event as any).type
         if (type === "session.retry.scheduled") {
-          log("OpenCode provider retry scheduled", { attempt: data.attempt, message: data.message })
+          record("OpenCode provider retry scheduled", { attempt: data.attempt, message: data.message })
           continue
         }
         if (type === "session.tool.called") {
@@ -289,7 +295,7 @@ async function runAgent(request: Request, profile: Profile, completion: Completi
         if (type === "session.execution.interrupted") throw new Error("OpenCode session was interrupted")
         break
       }
-      log("Agent run summary", { steps, tools: toolCalls })
+      record("Agent run summary", { steps, tools: toolCalls })
       const pollUntil = Math.min(deadline, performance.now() + 60_000)
       let final = ""
       let infoError: any

@@ -138,7 +138,7 @@ Claude activity identifies safe, high-level work such as `Claude: Reading src/ut
 
 ## Demonstrate a failed compiler run
 
-The demo project deliberately has warnings and a compiler error. A separate compiler image demonstrates the failure without agent SDKs or model credentials:
+The demo project in `demo/` deliberately fails to build: it contains one compiler error and several warnings, all surfaced by the strict flags in `demo/Makefile` (`-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wformat=2 -Wcast-align=strict`). You can see the failure without any agent SDK or model credentials by building it in a small compiler image that carries the same ARM32 cross toolchain as the agent containers:
 
 ```sh
 docker build -f demo/Dockerfile -t codex-demo-compiler:dev demo
@@ -149,7 +149,19 @@ docker run --rm \
   codex-demo-compiler:dev make
 ```
 
-The command intentionally exits with a failure status and reports, among other issues, the problem in `demo/src/util.c`.
+The command intentionally exits with a failure status and reports, among others:
+
+```text
+src/util.c:23:9: error: conflicting types for 'parsed'; have 'int'
+src/util.c:8:25: warning: implicit declaration of function 'strlen' [-Wimplicit-function-declaration]
+src/util.c:8:23: warning: comparison of integer expressions of different signedness [-Wsign-compare]
+src/util.c:29:13: warning: cast increases required alignment of target type [-Wcast-align]
+src/main.c:18:9: warning: unused variable 'unused' [-Wunused-variable]
+```
+
+Run the same container with `make clean` (or delete `demo/out/`) to reset the build output.
+
+Agent tasks work on a Git copy of this project: `make -C shared demo-repo` exports it as `shared/work/demo-repo.git`, and every task checks out a fresh work branch from it. A task is complete when `make clean` followed by `make` exits 0 and prints nothing matching `warning:` or `error:` — exactly what the `completion` checks in the example tasks enforce. The full story of the demo project lives in [`demo/README.md`](demo/README.md).
 
 ## Product and architecture documentation
 
